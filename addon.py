@@ -10,7 +10,7 @@ import logging
 from logging import Handler
 import xbmcplugin
 from xbmcgui import ListItem
-from resources.lib.tor import Subscriptions
+from resources.lib.tor import Subscriptions, SubscriptionsCursor
 from resources.lib.offtictor_strings import OffticTorStrings
 
 try:
@@ -85,33 +85,24 @@ def set_args():
         feed_id =sys.argv[4]
     
 
-def feed(id):
+def feed(feedId, next_pointer=None):
     try:
         
         xbmc.log("================= " + addonname + " ========================")
+        
+        log('feed ID: ' + feedId)
 
         max_feed_len = int(addon.getSetting("max_feed_len"))
         log('max_feed_len:' +  str(max_feed_len))
         try:
             
-            #w = xbmcgui.Window()#xbmcgui.getCurrentWindowId())
-            #w.show()
-            
-            #xbmcgui.Dialog().contextmenu(['Option #1', 'Option #2', 'Option #3'])
-            
-            
-            #hdlr = Handler(logging.DEBUG)
-            
-            #conn._logger.addHandler(hdlr)
             try:
-                #conn.login()
-                #log("Connectat")
                 xbmcgui.Dialog().notification(addonname, strings.get("Connected"))
                 torList = TorList()
                 serTorList = None
                 try:
                     cache.table_name = addonid
-                    cachename = "torList_" + str(id)
+                    cachename = "torList_" + str(feedId) + "_"  + str(next_pointer)
                     cachedvalue = cache.get(cachename)
                     log('cached value: ' + cachedvalue)
                     serTorList = eval(cachedvalue)
@@ -129,7 +120,7 @@ def feed(id):
                     torList = TorList()
                     
                 search = tor.ItemsSearch(conn)
-                unread = search.get_unread_only(1000, id)
+                unread = search.get_unread_only(limit_items=addon.getSetting("max_feed_len"), feed=feedId, stop=True, continuation=next_pointer)
                 
                 debug = ""
                 title = ""
@@ -137,6 +128,7 @@ def feed(id):
                 for item in unread:
                     item.get_details()
                     if item.published > torList.time:
+                        # future features: video addon
                         m = re.search("youtube.com/embed/([a-zA-Z0-9]*)", item.content)
                         mediaURL = None
                         if item.mediaUrl != None:
@@ -144,9 +136,10 @@ def feed(id):
                         elif m!= None and m.group(1)!=None:
                             #mediaURL = 'plugin://plugin.video.youtube/play/?video_id=' + m.group(1) + '&handle=' + str(handle)
                             mediaURL = 'RunScript(plugin.video.youtube/play/,' + str(handle) +',?video_id=' + m.group(1) + '&handle=' + str(handle) + ')'
+                            #uncomment when ready to enable as video addon
                             #item.mediaUrl = mediaURL
                              
-                        if mediaURL != None:
+                        if item.mediaUrl != None:
                             title = item.title
                             
                             #title = item.get('title')
@@ -162,8 +155,6 @@ def feed(id):
                     if i==max_feed_len:
                         break
                     
-                
-                    
                 for post in torList.get_post_list():
                          
                     if post.item.mediaUrl != None:
@@ -173,7 +164,9 @@ def feed(id):
                         
                         li = ListItem()
                         li.setLabel(title)
-                        li.setInfo('plot', post.item.content)
+                        li.setInfo('music', {
+                            'title': post.item.content
+                        })
                         
                         
                         li.addContextMenuItems([
@@ -182,11 +175,19 @@ def feed(id):
                         ])
                         xbmcplugin.addDirectoryItem(handle, post.item.mediaUrl, li)
                 
+                if search.next_pointer != None:
+                    li = ListItem()
+                    li.setLabel(strings.get('Next_page'))
+                    url = base_url + '?' + urllib.urlencode({'action':'feed','handle':str(handle),'auth_code':auth_code, 'feedId' : feedId, 'next_pointer' : search.next_pointer})
+                    log(url)
+                    xbmcplugin.addDirectoryItem(handle, url, li, True)
+                
+                
                 xbmcplugin.endOfDirectory(handle)
                 #xbmcgui.Dialog().select("heading_unread", torList.get_post_list())
                 
                 cache.table_name = addonid
-                cachename = "torList_" + str(id)
+                cachename = "torList_" + str(feedId)
                 time.localtime()
                 #cache.set(cachename,repr(torList))
                 #cache.set(cachename, json.dumps(torList))
@@ -207,16 +208,28 @@ def feed(id):
         tratarError(strings.get('Can_not_start'))
 
 def feeds():
-    subs = Subscriptions(conn)
-    list = subs.get_all()
-    list = sorted(list, key=lambda Subscriptions: Subscriptions.firstitemmsec, reverse=True)
-    for feed in list:
-        li = ListItem()
-        li.setLabel(feed.title)
-        li.setIconImage(feed.iconUrl)
-        url = base_url + '?' + urllib.urlencode({'action':'feed','handle':str(handle),'auth_code':auth_code, 'feed' : feed.id})
-        log(url)
-        xbmcplugin.addDirectoryItem(handle, url, li, True)
+    subs = Subscriptions(conn, 'audio')
+    
+    s_list = subs.get_unread()
+    s_list = sorted(s_list, key=lambda Subscriptions: Subscriptions.firstitemmsec, reverse=True)
+    sCursor = SubscriptionsCursor(s_list, 'audio')
+    
+    #sCursor = subs.get_unread_cursor()
+    xbmcgui.Dialog().notification(addonname, strings.get('Subscriptions_preloaded'), icon='', time=0, sound=False)
+    feed = sCursor.next()
+    while (feed!=False):
+        if feed.matches:
+            xbmcgui.Dialog().notification(addonname, feed.title, icon='', time=0, sound=False)
+            feed.title += ' (' + str(feed.unread_count) + ')'
+            li = ListItem()
+            li.setLabel(feed.title)
+            li.setIconImage(feed.iconUrl)
+            url = base_url + '?' + urllib.urlencode({'action':'feed','handle':str(handle),'auth_code':auth_code, 'feedId' : feed.id})
+            log(url)
+            xbmcplugin.addDirectoryItem(handle, url, li, True)
+        else:
+            xbmcgui.Dialog().notification(addonname, feed.title, icon=xbmcgui.NOTIFICATION_WARNING, time=0, sound=False)
+        feed = sCursor.next()
         
     xbmcplugin.endOfDirectory(handle)
 
@@ -224,7 +237,8 @@ def feeds():
 def clear():
     cache.delete("torList_%")
     xbmcgui.Dialog().notification(addonname, strings.get("Cache_cleared"), icon='', time=0, sound=False)
-    
+
+   
 def index():
     url = base_url + '?' + urllib.urlencode({'action':'feeds','handle':str(handle),'auth_code':auth_code})
     li = ListItem()
@@ -244,6 +258,7 @@ handle = None
 auth_code = None
 action = None
 feed_id = None
+next_pointer = None
 base_url = sys.argv[0]
 args = urlparse.parse_qs(sys.argv[2][1:])
 
@@ -263,7 +278,13 @@ if len(args)>0:
     action= args.get('action', None)
     if action <> None:
         action = str(action[0])
-    feed_id = args.get('feed', None)
+    feed_id = args.get('feedId', None)
+    if feed_id <> None:
+        feed_id = str(feed_id[0])
+    next_pointer = args.get('next_pointer', None)
+    if next_pointer <> None:
+        next_pointer = str(next_pointer[0])
+    
 
 log('handle: ' + str(handle))
 log('autho_code: ' + str(auth_code))
@@ -299,7 +320,7 @@ if action!=None and  feed_id != None:
         except:
             xbmcgui.Dialog().notification(addonname, strings.get("Can_not_mark_as_unread"), xbmcgui.NOTIFICATION_ERROR, 7000, True)
     elif action=='feed':
-        feed(feed_id)
+        feed(feed_id, next_pointer)
 elif action=='feeds':
     feeds()
 elif action=='clear':

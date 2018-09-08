@@ -80,6 +80,14 @@ msgctxt "#32025"
 msgid "Max feed length"
 msgstr "Posts a mostrar d'un feed"
 
+msgctxt "#32026"
+msgid "Subscriptions preloaded"
+msgstr "Subscripcions pre-carregades"
+
+msgctxt "#32027"
+msgid "Next page"
+msgstr "Seguent pàgina"
+
 msgctxt "#33001"
 msgid "Can not connect"
 msgstr "No s'ha pogut connectar"

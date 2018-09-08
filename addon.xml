@@ -15,16 +15,18 @@
 		<description lang="en">It shows your TOR subscriptions on KODI. For each channel you can listen to its podcasts.</description>
 		<summary lang="ca">Connector NO oficial per a RSS de The Old Reader</summary>
 		<description lang="ca">Mostra les teves subscripcions RSS a The Old Reader. Per cada canal pots escoltar els seus podcasts.</description>
+		<summary lang="es">Connector NO oficial para RSS de The Old Reader</summary>
+		<description lang="es">Mostra tus suscripciones RSS en The Old Reader. Para cada canal puedes escuchar sus podcasts.</description>
 		<license>GNU General Public License, v2</license>
-		<language>en ca</language>
+		<language>en ca es</language>
 		<forum></forum>
-		<source></source>
+		<source>https://github.com/kusinkay/plugin.offtictor/</source>
 		<website>Kodi.tv</website>
 		<email>juanepm@tinet.org</email>
 		<assets>
 			<icon>icon.png</icon>
 			<fanart>fanart.png</fanart>
 		</assets>
-		<news>Updated the addon to use new addon.xml metadata</news>
+		<news>Just released</news>
 	</extension>
 </addon>

@@ -62,7 +62,7 @@ msgstr "No s'ha pogut marcar com a NO llegit"
 
 msgctxt "#32021"
 msgid "List Subscriptions"
-msgstr "Llistar suscripcions"
+msgstr "Llistar subscripcions"
 
 msgctxt "#32022"
 msgid "Clear cache"
@@ -79,6 +79,14 @@ msgstr "Comportament"
 msgctxt "#32025"
 msgid "Max feed length"
 msgstr "Posts a mostrar d'un feed"
+
+msgctxt "#32026"
+msgid "Subscriptions preloaded"
+msgstr "Subscripcions pre-carregades"
+
+msgctxt "#32027"
+msgid "Next page"
+msgstr "Seguent pàgina"
 
 msgctxt "#33001"
 msgid "Can not connect"

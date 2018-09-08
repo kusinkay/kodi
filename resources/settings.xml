@@ -6,6 +6,6 @@
         <setting type="sep"/>
     </category>
     <category label="32024">
-    	<setting label="32025" type="number" id="max_feed_len" default="5"/>
+    	<setting label="32025" type="number" id="max_feed_len" default="10"/>
     </category>
 </settings>
