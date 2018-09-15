@@ -1,2 +1,5 @@
+/**/.gitignore
 /.project
 /.pydevproject
+/samples/
+/**/__init__.py
