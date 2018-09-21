@@ -58,7 +58,8 @@ def tratarError(msg):
     xbmcgui.Dialog().notification(addonname, msg, xbmcgui.NOTIFICATION_ERROR, 7000, True)
    
 def log(msg, level=xbmc.LOGDEBUG):
-    xbmc.log("|| " + addonid + ": " + msg, level)
+    if REMOTE_DBG:
+        xbmc.log("|| " + addonid + ": " + msg, level)
     
 def route(args):
     output = str(handle)
@@ -87,16 +88,13 @@ def set_args():
 
 def feed(feedId, next_pointer=None):
     try:
-        if REMOTE_DBG:
-            xbmc.log("================= " + addonname + " ========================")
+        log("================= " + addonname + " ========================")
         
-        if REMOTE_DBG:
-            log('feed ID: ' + feedId)
+        log('feed ID: ' + feedId)
 
         max_feed_len = int(addon.getSetting("max_feed_len"))
         
-        if REMOTE_DBG:
-            log('max_feed_len:' +  str(max_feed_len))
+        log('max_feed_len:' +  str(max_feed_len))
         try:
             
             try:
@@ -107,19 +105,16 @@ def feed(feedId, next_pointer=None):
                     cache.table_name = addonid
                     cachename = "torList_" + str(feedId) + "_"  + str(next_pointer)
                     cachedvalue = cache.get(cachename)
-                    if REMOTE_DBG:
-                        log('cached value: ' + cachedvalue)
+                    log('cached value: ' + cachedvalue)
                     serTorList = eval(cachedvalue)
                     torList.unserialize(serTorList)
                     #serTorList = json.loads(cachedvalue)
                     dummyStr = ''
                 except:
-                    if REMOTE_DBG:
-                        log('Can not retrieve cache for "' + cachename + '"')
+                    log('Can not retrieve cache for "' + cachename + '"')
                     
                 if serTorList!=None and serTorList != '':
-                    if REMOTE_DBG:
-                        log('Retrieved cache for "' + cachename + '"')
+                    log('Retrieved cache for "' + cachename + '"')
                     #torList = serTorList
                     
                 else:
@@ -152,8 +147,7 @@ def feed(feedId, next_pointer=None):
                             torPost = TorPost(item)
                             torList.add_post(torPost)
                             title = "%s" % title.encode('utf-8')
-                            if REMOTE_DBG:
-                                log(title, xbmc.LOGDEBUG)
+                            log(title, xbmc.LOGDEBUG)
                             xbmcgui.Dialog().notification(addonname, title, icon='', time=0, sound=False)
                             
                             i = i+1
@@ -167,8 +161,7 @@ def feed(feedId, next_pointer=None):
                     if post.item.mediaUrl != None:
                         title = post.item.title
                         title = "%s" % title.encode('utf-8')
-                        if REMOTE_DBG:
-                            log(title, xbmc.LOGDEBUG)
+                        log(title, xbmc.LOGDEBUG)
                         
                         li = ListItem()
                         li.setLabel(title)
@@ -187,8 +180,7 @@ def feed(feedId, next_pointer=None):
                     li = ListItem()
                     li.setLabel(strings.get('Next_page'))
                     url = base_url + '?' + urllib.urlencode({'action':'feed','handle':str(handle),'auth_code':auth_code, 'feedId' : feedId, 'next_pointer' : search.next_pointer})
-                    if REMOTE_DBG:
-                        log(url)
+                    log(url)
                     xbmcplugin.addDirectoryItem(handle, url, li, True)
                 
                 
@@ -202,8 +194,7 @@ def feed(feedId, next_pointer=None):
                 #cache.set(cachename, json.dumps(torList))
                 torList.time = time.time()
                 cache.set(cachename, torList.serialize())
-                if REMOTE_DBG:
-                    log("iteration ends", xbmc.LOGDEBUG)
+                log("iteration ends", xbmc.LOGDEBUG)
             except:
                 tratarError(strings.get("Can_not_connect_TOR"))
         except:
@@ -232,10 +223,9 @@ def feeds():
             feed.title += ' (' + str(feed.unread_count) + ')'
             li = ListItem()
             li.setLabel(feed.title)
-            li.setArt(feed.iconUrl)
+            li.setArt({'icon': feed.iconUrl})
             url = base_url + '?' + urllib.urlencode({'action':'feed','handle':str(handle),'auth_code':auth_code, 'feedId' : feed.id})
-            if REMOTE_DBG:
-                log(url)
+            log(url)
             xbmcplugin.addDirectoryItem(handle, url, li, True)
         else:
             xbmcgui.Dialog().notification(addonname, feed.title, icon=xbmcgui.NOTIFICATION_WARNING, time=0, sound=False)
@@ -295,19 +285,17 @@ if len(args)>0:
     if next_pointer <> None:
         next_pointer = str(next_pointer[0])
     
-if REMOTE_DBG:
-    log('handle: ' + str(handle))
-    log('autho_code: ' + str(auth_code))
-    log('base_url: ' + base_url)
-    log('action:' + str(action))
+log('handle: ' + str(handle))
+log('autho_code: ' + str(auth_code))
+log('base_url: ' + base_url)
+log('action:' + str(action))
 
 if auth_code!=None and auth_code.find('?')==-1:
     conn.auth_code=auth_code
 else:
     conn.login()
     auth_code = conn.auth_code
-    if REMOTE_DBG:
-        log("Connected")
+    log("Connected")
 
 if action!=None and  feed_id != None:
     
