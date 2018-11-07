@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<addon id="plugin.offtictor" name="The Old Reader addon (by offtic)" version="1.0.0RC" provider-name="kusinkay">
+<addon id="plugin.offtictor" name="The Old Reader addon (by offtic)" version="1.0.1" provider-name="kusinkay">
 	<requires>
 		<import addon="xbmc.python" version="2.25.0"/>
 		<import addon="script.module.addon.common"/>
 		<import addon="script.common.plugin.cache" version="2.5.5"/>
-		<import addon="script.module.requests" version="2.19.1"/>
+		<import addon="script.module.beautifulsoup" version="3.2.1"/>
+		<import addon="script.api.rtve" version="1.0.0"/>
 		<import addon="script.module.pydevd" optional="true" version="3.4.1"/><!-- debug from linux -->
 	</requires>
 	<extension point="xbmc.python.pluginsource" library="addon.py">
@@ -27,6 +28,11 @@
 			<icon>icon.png</icon>
 			<fanart>fanart.png</fanart>
 		</assets>
-		<news>Just released</news>
+		<news>
+v1.0.1 (2018-11-07)
+- cache for subscriptions list
+- classify audio feeds by embeded audio in the content
+- improve RTVE audio play as in plugin.audio.rne
+		</news>
 	</extension>
 </addon>

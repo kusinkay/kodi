@@ -88,6 +88,10 @@ msgctxt "#32027"
 msgid "Next page"
 msgstr "Siguiente página"
 
+msgctxt "#32028"
+msgid "Loading subscriptions"
+msgstr "Cargando suscripciones"
+
 msgctxt "#33001"
 msgid "Can not connect"
 msgstr "No se ha podido conectar"

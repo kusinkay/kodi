@@ -20,6 +20,7 @@ class OffticTorStrings:
             "Max_feed_len":                 32025,
             "Subscriptions_preloaded":      32026,
             "Next_page":                    32027,
+            "Loading_subscriptions":        32028,
             
             "Can_not_connect":              33001,
             "Can_not_connect_TOR":          33002,

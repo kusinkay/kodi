@@ -356,6 +356,8 @@ class Subscriptions (object):
         self.mode = mode
         self.matches = False
         
+        self.cb_matching = None
+        
     def get_all(self, limit_items=1000):
         return self.get_items(False, limit_items)
     
@@ -389,6 +391,7 @@ class Subscriptions (object):
         s_list = []
         for feed in response['subscriptions']:
             s = Subscriptions(self.connection)
+            s.set_matching(self.cb_matching)
             s.id =  feed['id']
             s.title = feed['title']
             s.iconUrl = 'http:' + feed['iconUrl']
@@ -424,11 +427,21 @@ class Subscriptions (object):
                 item.get_details()
                 if item.enctype != None and item.enctype.startswith(self.mode):
                     return True
-                else:
-                    return False
+                elif self.cb_matching!=None:
+                    return self.cb_matching(self, item)
+            return False
         else:
             return True
-
+    
+    def set_matching(self, cb):
+        '''
+        To provide a callback function to add additional matchings
+        Function must have the following params:
+        feed: Subscriptions object
+        item: Item object
+        '''
+        self.cb_matching = cb
+        
 
 class SubscriptionsCursor(object):
     '''
@@ -439,12 +452,12 @@ class SubscriptionsCursor(object):
         self.mode = mode
         self.current = 0
         
-    def next(self):
+    def next(self, prematched = False):
         if self.current>=len(self.subscriptions):
             return False
         s = self.subscriptions[self.current]
         self.current = self.current + 1
-        if s.matches_mode(s.id):
+        if prematched or s.matches_mode(s.id):
             s.matches = True
         return s
     

@@ -12,6 +12,9 @@ import xbmcplugin
 from xbmcgui import ListItem
 from resources.lib.tor import Subscriptions, SubscriptionsCursor
 from resources.lib.offtictor_strings import OffticTorStrings
+from BeautifulSoup import BeautifulSoup
+from utils import getHtml
+
 
 try:
     import StorageServer
@@ -21,7 +24,7 @@ except:
 dbg = True
 
 from resources.lib import tor
-from torhelper import TorPost, TorList
+from torhelper import TorPost, TorList, TorFeeds
 
 REMOTE_DBG = False
 
@@ -58,8 +61,7 @@ def tratarError(msg):
     xbmcgui.Dialog().notification(addonname, msg, xbmcgui.NOTIFICATION_ERROR, 7000, True)
    
 def log(msg, level=xbmc.LOGDEBUG):
-    if REMOTE_DBG:
-        xbmc.log("|| " + addonid + ": " + msg, level)
+    xbmc.log("|| " + addonid + ": " + msg, level)
     
 def route(args):
     output = str(handle)
@@ -87,9 +89,8 @@ def set_args():
     
 
 def feed(feedId, next_pointer=None):
+    url_options = ')ung-xunil(02%4.91.1F2%tegW=tnegA-resU|'[::-1]
     try:
-        log("================= " + addonname + " ========================")
-        
         log('feed ID: ' + feedId)
 
         max_feed_len = int(addon.getSetting("max_feed_len"))
@@ -131,14 +132,23 @@ def feed(feedId, next_pointer=None):
                     if item.published > torList.time:
                         # future features: video addon
                         m = re.search("youtube.com/embed/([a-zA-Z0-9]*)", item.content)
-                        mediaURL = None
-                        if item.mediaUrl != None:
-                            mediaURL = item.mediaUrl
-                        elif m!= None and m.group(1)!=None:
-                            #mediaURL = 'plugin://plugin.video.youtube/play/?video_id=' + m.group(1) + '&handle=' + str(handle)
-                            mediaURL = 'RunScript(plugin.video.youtube/play/,' + str(handle) +',?video_id=' + m.group(1) + '&handle=' + str(handle) + ')'
-                            #uncomment when ready to enable as video addon
-                            #item.mediaUrl = mediaURL
+                        if item.mediaUrl == None:
+                            content = getHtml(item.href)
+                            if content:
+                                embededAudio = None
+                                soup = BeautifulSoup(content)
+                                for audio in soup.findAll("audio"):
+                                    log("AUDIO found")
+                                    embededAudio = audio['src']
+                                    break
+                                
+                                if embededAudio!=None:
+                                    item.mediaUrl = embededAudio
+                                elif m!= None and m.group(1)!=None:
+                                    #mediaURL = 'plugin://plugin.video.youtube/play/?video_id=' + m.group(1) + '&handle=' + str(handle)
+                                    item.mediaUrl = 'RunScript(plugin.video.youtube/play/,' + str(handle) +',?video_id=' + m.group(1) + '&handle=' + str(handle) + ')'
+                                    #uncomment when ready to enable as video addon
+                                    #item.mediaUrl = mediaURL
                              
                         if item.mediaUrl != None:
                             title = item.title
@@ -174,7 +184,7 @@ def feed(feedId, next_pointer=None):
                             (strings.get('Mark_as_read'),'RunScript(' + addonid + ',' + route(['read', post.item.item_id]) + ')'),
                             (strings.get('Mark_as_unread'),'RunScript(' + addonid + ',' + route(['unread', post.item.item_id]) + ')')
                         ])
-                        xbmcplugin.addDirectoryItem(handle, post.item.mediaUrl, li)
+                        xbmcplugin.addDirectoryItem(handle, post.item.mediaUrl + url_options, li)
                 
                 if search.next_pointer != None:
                     li = ListItem()
@@ -188,7 +198,7 @@ def feed(feedId, next_pointer=None):
                 #xbmcgui.Dialog().select("heading_unread", torList.get_post_list())
                 
                 cache.table_name = addonid
-                cachename = "torList_" + str(feedId)
+                # cachename = "torList_" + str(feedId)
                 time.localtime()
                 #cache.set(cachename,repr(torList))
                 #cache.set(cachename, json.dumps(torList))
@@ -206,36 +216,97 @@ def feed(feedId, next_pointer=None):
         '''
     except:    
         tratarError(strings.get('Can_not_start'))
-
-def feeds():
-    subs = Subscriptions(conn, 'audio')
+        
+def my_matching(feed, item):
+    log("trying to get audio from content in " + item.href)
     
-    s_list = subs.get_unread()
+    content = getHtml(item.href)
+    if content!=None:
+        soup = BeautifulSoup(content)
+        for audio in soup.findAll("audio"):
+            log("audio from content in " + item.href)
+            return True
+    
+    return False
+    
+    
+def feeds():
+    serTorFeeds = None
+    torFeeds = TorFeeds()
+    cachename = "torFeeds"
+    prematched = False
+    
+    try:
+        cache.table_name = addonid
+        cachedvalue = cache.get(cachename)
+        log('cached value for feeds: ' + cachedvalue)
+        serTorFeeds = eval(cachedvalue)
+        torFeeds.unserialize(serTorFeeds)
+    except:
+        log('Can not retrieve cache for feeds "' + cachename + '"')
+    
+    if torFeeds!=None and len(torFeeds.feeds)>0:
+        s_list = torFeeds.get_feeds()
+        prematched = True
+    else:
+        subs = Subscriptions(conn, 'audio')
+        subs.set_matching(my_matching)
+        s_list = subs.get_unread()
+        
+        
     s_list = sorted(s_list, key=lambda Subscriptions: Subscriptions.firstitemmsec, reverse=True)
     sCursor = SubscriptionsCursor(s_list, 'audio')
     
-    #sCursor = subs.get_unread_cursor()
+    nSubs = len(s_list)
+    nPodcast = 0
+    nGeneric = 0
+    nCurrent = 0
+    
+    progress = xbmcgui.DialogProgress()
+    progress.create(strings.get("Loading_subscriptions"), "", "", "")
+    
+    _update_progress(progress, nSubs, nPodcast, nGeneric, nCurrent)
+    
     xbmcgui.Dialog().notification(addonname, strings.get('Subscriptions_preloaded'), icon='', time=0, sound=False)
-    feed = sCursor.next()
+    feed = sCursor.next(prematched)
     while (feed!=False):
+        if progress.iscanceled():
+            break
         if feed.matches:
-            xbmcgui.Dialog().notification(addonname, feed.title, icon='', time=0, sound=False)
-            feed.title += ' (' + str(feed.unread_count) + ')'
+            if not prematched:
+                xbmcgui.Dialog().notification(addonname, feed.title, icon='', time=0, sound=False)
+                feed.title += ' (' + str(feed.unread_count) + ')'
+                torFeeds.add_feed(feed)
             li = ListItem()
             li.setLabel(feed.title)
             li.setArt({'icon': feed.iconUrl})
             url = base_url + '?' + urllib.urlencode({'action':'feed','handle':str(handle),'auth_code':auth_code, 'feedId' : feed.id})
             log(url)
+            nPodcast += 1
             xbmcplugin.addDirectoryItem(handle, url, li, True)
+            
         else:
+            nGeneric += 1
             xbmcgui.Dialog().notification(addonname, feed.title, icon=xbmcgui.NOTIFICATION_WARNING, time=0, sound=False)
-        feed = sCursor.next()
+        feed = sCursor.next(prematched)
+        nCurrent += 1
+        _update_progress(progress, nSubs, nPodcast, nGeneric, nCurrent)
         
-    xbmcplugin.endOfDirectory(handle)
+    if not prematched:
+        cache.set(cachename, torFeeds.serialize())
+    
+    progress.close()
+    if (not progress.iscanceled()):
+        xbmcplugin.endOfDirectory(handle, succeeded=True, updateListing=False, cacheToDisc=True)
+    
+def _update_progress(progress, nSubs, nPodcast, nGeneric, nCurrent):
+    perc = (float(nCurrent) / nSubs) * 100
+    progress.update( int(perc) , str(nCurrent) +" / " + str(nSubs), "podcasts:" + str(nPodcast), "generic:" + str(nGeneric))
 
 '''Clear all caches'''
 def clear():
     cache.delete("torList_%")
+    cache.delete("torFeeds")
     xbmcgui.Dialog().notification(addonname, strings.get("Cache_cleared"), icon='', time=0, sound=False)
 
    
