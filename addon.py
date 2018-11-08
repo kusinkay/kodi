@@ -14,6 +14,8 @@ from resources.lib.tor import Subscriptions, SubscriptionsCursor
 from resources.lib.offtictor_strings import OffticTorStrings
 from BeautifulSoup import BeautifulSoup
 from utils import getHtml
+import resources.lib.html2text
+from resources.lib.html2text import html2text, HTML2Text
 
 
 try:
@@ -45,7 +47,7 @@ if REMOTE_DBG:
     try:
         #import pysrc.pydevd as pydevd # with the addon script.module.pydevd, only use `import pydevd`
         import sys
-        #sys.path.append(addonpath, '../script.module.pydevd/lib/')
+        sys.path.append(addonpath + '../script.module.pydevd/lib/')
         import pydevd
         # stdoutToServer and stderrToServer redirect stdout and stderr to eclipse console
         pydevd.settrace('localhost', stdoutToServer=True, stderrToServer=True)
@@ -112,7 +114,7 @@ def feed(feedId, next_pointer=None):
                     #serTorList = json.loads(cachedvalue)
                     dummyStr = ''
                 except:
-                    log('Can not retrieve cache for "' + cachename + '"')
+                    log('Can not retrieve cache for "' + cachename + '"', xbmc.LOGWARNING)
                     
                 if serTorList!=None and serTorList != '':
                     log('Retrieved cache for "' + cachename + '"')
@@ -139,7 +141,7 @@ def feed(feedId, next_pointer=None):
                                 soup = BeautifulSoup(content)
                                 for audio in soup.findAll("audio"):
                                     log("AUDIO found")
-                                    embededAudio = audio['src']
+                                    embededAudio = audio.source['src']
                                     break
                                 
                                 if embededAudio!=None:
@@ -175,10 +177,19 @@ def feed(feedId, next_pointer=None):
                         
                         li = ListItem()
                         li.setLabel(title)
-                        li.setInfo('music', {
-                            'title': post.item.content
-                        })
                         
+                        post.item = _fill_post(post.item)
+                        
+                        
+                        li.setInfo('music', {
+                            'title': post.item.txtContent
+                        })
+                        li.setArt({
+                            'icon': post.item.image,
+                            'thumb': post.item.image,
+                            'poster': post.item.image,
+                            'fanart': post.item.image
+                        })
                         
                         li.addContextMenuItems([
                             (strings.get('Mark_as_read'),'RunScript(' + addonid + ',' + route(['read', post.item.item_id]) + ')'),
@@ -216,7 +227,25 @@ def feed(feedId, next_pointer=None):
         '''
     except:    
         tratarError(strings.get('Can_not_start'))
-        
+
+def _fill_post(post):
+    post.txtContent = ""
+    try:
+        #log(post.content.encode('utf-8'))
+        h = HTML2Text()
+        h.ignore_links = True
+        h.ignore_images = True
+        post.txtContent = h.handle(post.content)
+        #log(post.txtContent.encode('utf-8'))
+    except:
+        post.txtContent = post.content
+    
+    post.image = None
+    soup = BeautifulSoup(post.content)
+    for img in soup.findAll("img", limit=1):
+        post.image = img["src"]
+    return post
+       
 def my_matching(feed, item):
     log("trying to get audio from content in " + item.href)
     
@@ -279,7 +308,12 @@ def feeds():
                 torFeeds.add_feed(feed)
             li = ListItem()
             li.setLabel(feed.title)
-            li.setArt({'icon': feed.iconUrl})
+            li.setArt({
+                'icon': feed.iconUrl,
+                'thumb': feed.iconUrl,
+                'poster': feed.iconUrl,
+                'fanart': feed.iconUrl
+            })
             url = base_url + '?' + urllib.urlencode({'action':'feed','handle':str(handle),'auth_code':auth_code, 'feedId' : feed.id})
             log(url)
             nPodcast += 1

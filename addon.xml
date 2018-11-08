@@ -33,6 +33,9 @@ v1.0.1 (2018-11-07)
 - cache for subscriptions list
 - classify audio feeds by embeded audio in the content
 - improve RTVE audio play as in plugin.audio.rne
+- some images added
+- audio info without HTML format
+- improved embede audio identification
 		</news>
 	</extension>
 </addon>
