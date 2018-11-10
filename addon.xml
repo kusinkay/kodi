@@ -35,7 +35,11 @@ v1.0.1 (2018-11-07)
 - improve RTVE audio play as in plugin.audio.rne
 - some images added
 - audio info without HTML format
-- improved embede audio identification
+- improved embeded audio identification
+- localize progress messages
+- clearify matching notifications
+- match audio blog by its links to mp3 or ogg files
+
 		</news>
 	</extension>
 </addon>

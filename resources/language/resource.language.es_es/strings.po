@@ -92,6 +92,26 @@ msgctxt "#32028"
 msgid "Loading subscriptions"
 msgstr "Cargando suscripciones"
 
+msgctxt "#32029"
+msgid "Recorded feeds"
+msgstr "Suscripciones archivadas"
+
+msgctxt "#32030"
+msgid "Regular blogs"
+msgstr "Blogs"
+
+msgctxt "#32031"
+msgid "Podcast blogs"
+msgstr "Podcasts"
+
+msgctxt "#32032"
+msgid "Feed matches"
+msgstr "Suscripción con multimedia"
+
+msgctxt "#32033"
+msgid "Feed does not match"
+msgstr "Suscripción sin multimedia"
+
 msgctxt "#33001"
 msgid "Can not connect"
 msgstr "No se ha podido conectar"

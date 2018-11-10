@@ -130,6 +130,7 @@ class Item(object):
         self.mediaUrl = None
         self.published = None
         self.enctype = None
+        self.author = None
 
     # TODO: No use_get
     def _make_api_request(self, url_end, var, use_get=True):
@@ -215,7 +216,7 @@ class Item(object):
             self.enctype = item_det['enclosure'][0]['type']
         self.source = resp3['title']
         self.source_id = resp3['id']
-
+        self.author = item_det['author']
 class ItemsSearch(object):
     def __init__(self, connection):
         """

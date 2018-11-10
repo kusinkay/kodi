@@ -137,12 +137,7 @@ def feed(feedId, next_pointer=None):
                         if item.mediaUrl == None:
                             content = getHtml(item.href)
                             if content:
-                                embededAudio = None
-                                soup = BeautifulSoup(content)
-                                for audio in soup.findAll("audio"):
-                                    log("AUDIO found")
-                                    embededAudio = audio.source['src']
-                                    break
+                                embededAudio = _find_audio(content)
                                 
                                 if embededAudio!=None:
                                     item.mediaUrl = embededAudio
@@ -182,7 +177,8 @@ def feed(feedId, next_pointer=None):
                         
                         
                         li.setInfo('music', {
-                            'title': post.item.txtContent
+                            'title': post.item.txtContent,
+                            'artist': post.item.author
                         })
                         li.setArt({
                             'icon': post.item.image,
@@ -227,6 +223,22 @@ def feed(feedId, next_pointer=None):
         '''
     except:    
         tratarError(strings.get('Can_not_start'))
+
+def _find_audio(content):
+    audio_ext = ["ogg", "mp3"]
+    embededAudio = None
+    soup = BeautifulSoup(content)
+    for audio in soup.findAll("audio"):
+        #log("AUDIO found")
+        embededAudio = audio.source["src"]
+        break
+    if embededAudio==None:
+        for link in soup.findAll("a", {"href": "*"}):
+            for ext in audio_ext:
+                if link["href"].endswith("." + ext):
+                    embededAudio = link["href"]
+        
+    return embededAudio
 
 def _fill_post(post):
     post.txtContent = ""
@@ -303,7 +315,7 @@ def feeds():
             break
         if feed.matches:
             if not prematched:
-                xbmcgui.Dialog().notification(addonname, feed.title, icon='', time=0, sound=False)
+                xbmcgui.Dialog().notification(strings.get("Feed_matches"), feed.title, icon='', time=0, sound=False)
                 feed.title += ' (' + str(feed.unread_count) + ')'
                 torFeeds.add_feed(feed)
             li = ListItem()
@@ -321,10 +333,10 @@ def feeds():
             
         else:
             nGeneric += 1
-            xbmcgui.Dialog().notification(addonname, feed.title, icon=xbmcgui.NOTIFICATION_WARNING, time=0, sound=False)
-        feed = sCursor.next(prematched)
+            xbmcgui.Dialog().notification(strings.get("No_feed_matches"), feed.title, icon=xbmcgui.NOTIFICATION_WARNING, time=0, sound=False)
         nCurrent += 1
         _update_progress(progress, nSubs, nPodcast, nGeneric, nCurrent)
+        feed = sCursor.next(prematched)
         
     if not prematched:
         cache.set(cachename, torFeeds.serialize())
@@ -335,7 +347,10 @@ def feeds():
     
 def _update_progress(progress, nSubs, nPodcast, nGeneric, nCurrent):
     perc = (float(nCurrent) / nSubs) * 100
-    progress.update( int(perc) , str(nCurrent) +" / " + str(nSubs), "podcasts:" + str(nPodcast), "generic:" + str(nGeneric))
+    progress.update( int(perc) , 
+        strings.get("Progress_title") + ": " +  str(nCurrent) +" / " + str(nSubs), 
+        strings.get("Podcast_blogs") + ": " + str(nPodcast),
+        strings.get("Regular_blogs") + ": "  + str(nGeneric))
 
 '''Clear all caches'''
 def clear():
@@ -390,11 +405,12 @@ if len(args)>0:
     if next_pointer <> None:
         next_pointer = str(next_pointer[0])
     
+'''
 log('handle: ' + str(handle))
 log('autho_code: ' + str(auth_code))
 log('base_url: ' + base_url)
 log('action:' + str(action))
-
+'''
 if auth_code!=None and auth_code.find('?')==-1:
     conn.auth_code=auth_code
 else:
@@ -432,11 +448,3 @@ elif action=='clear':
 
 else:
     index()
-
-
-
-'''
-else:
-    xbmcgui.Dialog().notification(addonname, action)'''
-    
-    

@@ -21,6 +21,11 @@ class OffticTorStrings:
             "Subscriptions_preloaded":      32026,
             "Next_page":                    32027,
             "Loading_subscriptions":        32028,
+            "Progress_title":               32029,
+            "Regular_blogs":                32030,
+            "Podcast_blogs":                32031,
+            "Feed_matches":                 32032,
+            "No_feed_matches":              32033,
             
             "Can_not_connect":              33001,
             "Can_not_connect_TOR":          33002,
