@@ -132,21 +132,17 @@ def feed(feedId, next_pointer=None):
                 for item in unread:
                     item.get_details()
                     if item.published > torList.time:
-                        # future features: video addon
-                        m = re.search("youtube.com/embed/([a-zA-Z0-9]*)", item.content)
                         if item.mediaUrl == None:
                             content = getHtml(item.href)
                             if content:
                                 embededAudio = _find_audio(content)
-                                
+                                yt_id = _find_embeded_youtube(item.content)
                                 if embededAudio!=None:
-                                    item.mediaUrl = embededAudio
-                                elif m!= None and m.group(1)!=None:
-                                    #mediaURL = 'plugin://plugin.video.youtube/play/?video_id=' + m.group(1) + '&handle=' + str(handle)
-                                    item.mediaUrl = 'RunScript(plugin.video.youtube/play/,' + str(handle) +',?video_id=' + m.group(1) + '&handle=' + str(handle) + ')'
-                                    #uncomment when ready to enable as video addon
-                                    #item.mediaUrl = mediaURL
-                             
+                                    item.mediaUrl = embededAudio + url_options
+                                elif yt_id!=None:
+                                    #item.mediaURL = 'plugin://plugin.video.youtube/play/?video_id=' + yt_id + '&handle=' + str(handle) + "&"
+                                    item.mediaUrl = 'RunScript(plugin.video.youtube/play/,' + str(handle) +',?video_id=' + yt_id + ')'
+                                    
                         if item.mediaUrl != None:
                             title = item.title
                             
@@ -191,7 +187,7 @@ def feed(feedId, next_pointer=None):
                             (strings.get('Mark_as_read'),'RunScript(' + addonid + ',' + route(['read', post.item.item_id]) + ')'),
                             (strings.get('Mark_as_unread'),'RunScript(' + addonid + ',' + route(['unread', post.item.item_id]) + ')')
                         ])
-                        xbmcplugin.addDirectoryItem(handle, post.item.mediaUrl + url_options, li)
+                        xbmcplugin.addDirectoryItem(handle, post.item.mediaUrl, li)
                 
                 if search.next_pointer != None:
                     li = ListItem()
@@ -223,6 +219,13 @@ def feed(feedId, next_pointer=None):
         '''
     except:    
         tratarError(strings.get('Can_not_start'))
+
+def _find_embeded_youtube(content):
+    # future features: video addon
+    m = re.search("youtube.com/embed/([a-zA-Z0-9]*)", content)
+    if m!= None and m.group(1)!=None:
+        return m.group(1)
+    return None
 
 def _find_audio(content):
     audio_ext = ["ogg", "mp3"]
@@ -267,6 +270,9 @@ def my_matching(feed, item):
         for audio in soup.findAll("audio"):
             log("audio from content in " + item.href)
             return True
+        yt_id = _find_embeded_youtube(content)
+        #return yt_id!=None <- uncomment when ready to separate video from audio
+        return None
     
     return False
     
