@@ -5,6 +5,7 @@
 		<import addon="script.module.addon.common"/>
 		<import addon="script.common.plugin.cache" version="2.5.5"/>
 		<import addon="script.module.beautifulsoup" version="3.2.1"/>
+		<import addon="script.module.requests" version="2.19.1"/>
 		<import addon="script.api.rtve" version="1.0.0"/>
 		<import addon="script.module.pydevd" optional="true" version="3.4.1"/><!-- debug from linux -->
 	</requires>
