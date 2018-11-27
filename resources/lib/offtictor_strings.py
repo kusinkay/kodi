@@ -26,6 +26,10 @@ class OffticTorStrings:
             "Podcast_blogs":                32031,
             "Feed_matches":                 32032,
             "No_feed_matches":              32033,
+            "Clear_one_cache":              32034,
+            "Open_settings":                32035,
+            "Clear_Subscriptions_cache":    32036,
+            "Clear_Feeds_cache":            32037,
             
             "Can_not_connect":              33001,
             "Can_not_connect_TOR":          33002,

@@ -112,6 +112,21 @@ msgctxt "#32033"
 msgid "Feed does not match"
 msgstr "Subscripció sense multimèdia"
 
+msgctxt "#32034"
+msgid "Clear its cache"
+msgstr "Neteja la seva caché"
+
+msgctxt "#32035"
+msgid "Open settings"
+msgstr "Configurar connector"
+
+msgctxt "#32036"
+msgid "Clear subscriptions cache"
+msgstr "Netejar cache de subscripcions"
+
+msgctxt "#32037"
+msgid "Clear Feeds cache"
+msgstr "Netejar cache de posts"
 
 msgctxt "#33001"
 msgid "Can not connect"

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<addon id="plugin.offtictor" name="The Old Reader addon (by offtic)" version="1.0.1" provider-name="kusinkay">
+<addon id="plugin.offtictor" name="The Old Reader addon (by offtic)" version="1.0.2" provider-name="kusinkay">
 	<requires>
 		<import addon="xbmc.python" version="2.25.0"/>
 		<import addon="script.module.addon.common"/>
@@ -30,6 +30,12 @@
 			<fanart>fanart.png</fanart>
 		</assets>
 		<news>
+v1.0.2 (2018-11-27)
+- Clear individual feed cache
+- Clear just subscriptions folder
+- Add cache functions to index
+
+
 v1.0.1 (2018-11-07)
 - cache for subscriptions list
 - classify audio feeds by embeded audio in the content

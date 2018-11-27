@@ -335,6 +335,9 @@ def feeds():
             url = base_url + '?' + urllib.urlencode({'action':'feed','handle':str(handle),'auth_code':auth_code, 'feedId' : feed.id})
             log(url)
             nPodcast += 1
+            li.addContextMenuItems([
+                (strings.get('Clear_one_cache'),'RunScript(' + addonid + ',' + route(['clear_one', feed.id]) + ')')
+            ])
             xbmcplugin.addDirectoryItem(handle, url, li, True)
             
         else:
@@ -360,9 +363,15 @@ def _update_progress(progress, nSubs, nPodcast, nGeneric, nCurrent):
 
 '''Clear all caches'''
 def clear():
-    cache.delete("torList_%")
-    cache.delete("torFeeds")
+    _clear(["torList_%", "torFeeds"])
+    
+def _clear(keys):
+    for key in keys:
+        cache.delete(key)
     xbmcgui.Dialog().notification(addonname, strings.get("Cache_cleared"), icon='', time=0, sound=False)
+    
+def clear_one(feed_id):
+    _clear(["torList_" + feed_id + "_%"])
 
    
 def index():
@@ -374,6 +383,19 @@ def index():
     li = ListItem()
     li.setLabel(strings.get('Clear_cache'))
     xbmcplugin.addDirectoryItem(handle, url, li, False)
+    url = base_url + '?' + urllib.urlencode({'action':'clear_feeds','handle':str(handle)})
+    li = ListItem()
+    li.setLabel(strings.get('Clear_Subscriptions_cache'))
+    xbmcplugin.addDirectoryItem(handle, url, li, False)
+    url = base_url + '?' + urllib.urlencode({'action':'clear_posts','handle':str(handle)})
+    li = ListItem()
+    li.setLabel(strings.get('Clear_Feeds_cache'))
+    xbmcplugin.addDirectoryItem(handle, url, li, False)
+    url = base_url + '?' + urllib.urlencode({'action':'settings','handle':str(handle)})
+    li = ListItem()
+    li.setLabel(strings.get('Open_settings'))
+    xbmcplugin.addDirectoryItem(handle, url, li, False)
+    
     
     xbmcplugin.endOfDirectory(handle)
         
@@ -447,10 +469,19 @@ if action!=None and  feed_id != None:
             xbmcgui.Dialog().notification(addonname, strings.get("Can_not_mark_as_unread"), xbmcgui.NOTIFICATION_ERROR, 7000, True)
     elif action=='feed':
         feed(feed_id, next_pointer)
+    elif action=='clear_one':
+        clear_one(feed_id)
+
 elif action=='feeds':
     feeds()
 elif action=='clear':
     clear()
+elif action=='settings':
+    addon.openSettings()
+elif action=='clear_feeds':
+    _clear(["torFeeds"])
+elif action=='clear_posts':
+    _clear(["torList_%"])
 
 else:
     index()
