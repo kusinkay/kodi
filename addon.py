@@ -101,7 +101,7 @@ def feed(feedId, next_pointer=None):
         try:
             
             try:
-                xbmcgui.Dialog().notification(addonname, strings.get("Connected"))
+                #xbmcgui.Dialog().notification(addonname, strings.get("Connected"))
                 torList = TorList()
                 serTorList = None
                 try:
@@ -124,14 +124,23 @@ def feed(feedId, next_pointer=None):
                     torList = TorList()
                     
                 search = tor.ItemsSearch(conn)
-                unread = search.get_unread_only(limit_items=addon.getSetting("max_feed_len"), feed=feedId, stop=True, continuation=next_pointer)
-                
+                unread = []
+                try:
+                    unread = search.get_unread_only(limit_items=addon.getSetting("max_feed_len"), feed=feedId, stop=True, continuation=next_pointer)
+                except:
+                    log("no connection, but maybe there's some cache")
                 debug = ""
                 title = ""
                 i = 0
                 for item in unread:
                     item.get_details()
                     if item.published > torList.time:
+                        '''
+                        Add if published after cache time
+                        '''
+                        yt_id = _find_embeded_youtube(item.mediaUrl)
+                        if yt_id != None:
+                            item.mediaUrl = _to_youtube_player(yt_id)
                         if item.mediaUrl == None:
                             content = getHtml(item.href)
                             if content:
@@ -140,8 +149,8 @@ def feed(feedId, next_pointer=None):
                                 if embededAudio!=None:
                                     item.mediaUrl = embededAudio + url_options
                                 elif yt_id!=None:
-                                    #item.mediaURL = 'plugin://plugin.video.youtube/play/?video_id=' + yt_id + '&handle=' + str(handle) + "&"
-                                    item.mediaUrl = 'RunScript(plugin.video.youtube/play/,' + str(handle) +',?video_id=' + yt_id + ')'
+                                    item.mediaUrl = _to_youtube_player(yt_id)
+                                    #item.mediaUrl = 'RunScript(plugin.video.youtube/play/,' + str(handle) +',?video_id=' + yt_id + ')'
                                     
                         if item.mediaUrl != None:
                             title = item.title
@@ -187,7 +196,11 @@ def feed(feedId, next_pointer=None):
                             (strings.get('Mark_as_read'),'RunScript(' + addonid + ',' + route(['read', post.item.item_id]) + ')'),
                             (strings.get('Mark_as_unread'),'RunScript(' + addonid + ',' + route(['unread', post.item.item_id]) + ')')
                         ])
-                        xbmcplugin.addDirectoryItem(handle, post.item.mediaUrl, li)
+                        if False: #post.item.video == True:
+                            url = base_url + '?' + urllib.urlencode({'action':'play','handle':str(handle),'video' : post.item.mediaUrl})
+                            xbmcplugin.addDirectoryItem(handle, url, li, True)
+                        else:
+                            xbmcplugin.addDirectoryItem(handle, post.item.mediaUrl, li)
                 
                 if search.next_pointer != None:
                     li = ListItem()
@@ -220,11 +233,17 @@ def feed(feedId, next_pointer=None):
     except:    
         tratarError(strings.get('Can_not_start'))
 
+def _to_youtube_player(yt_id):
+    return 'plugin://plugin.video.youtube/play/?video_id=' + yt_id
+
 def _find_embeded_youtube(content):
-    # future features: video addon
-    m = re.search("youtube.com/embed/([a-zA-Z0-9]*)", content)
-    if m!= None and m.group(1)!=None:
-        return m.group(1)
+    if content!=None:
+        m = re.search("youtube.com/embed/([a-zA-Z\-_0-9]*)", content)
+        if m!= None and m.group(1)!=None:
+            return m.group(1)
+        m = re.search("youtube.com/v/([a-zA-Z\-_0-9]*)", content)
+        if m!= None and m.group(1)!=None:
+            return m.group(1)
     return None
 
 def _find_audio(content):
@@ -271,8 +290,8 @@ def my_matching(feed, item):
             log("audio from content in " + item.href)
             return True
         yt_id = _find_embeded_youtube(content)
-        #return yt_id!=None <- uncomment when ready to separate video from audio
-        return None
+        return yt_id!=None #<- uncomment when ready to separate video from audio
+        #return None
     
     return False
     
@@ -398,6 +417,19 @@ def index():
     
     
     xbmcplugin.endOfDirectory(handle)
+    
+def play_video(path):
+    """
+    Play a video by the provided path.
+
+    :param path: Fully-qualified video URL
+    :type path: str
+    """
+    # Create a playable item with a path to play.
+    play_item = xbmcgui.ListItem(path=path)
+    # Pass the item to the Kodi player.
+    xbmcplugin.setResolvedUrl(handle, True, listitem=play_item)
+
         
     
 logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.DEBUG)
@@ -407,6 +439,7 @@ auth_code = None
 action = None
 feed_id = None
 next_pointer = None
+video = None
 base_url = sys.argv[0]
 args = urlparse.parse_qs(sys.argv[2][1:])
 
@@ -432,6 +465,9 @@ if len(args)>0:
     next_pointer = args.get('next_pointer', None)
     if next_pointer <> None:
         next_pointer = str(next_pointer[0])
+    video = args.get('video', None)
+    if video <> None:
+        video = str(video[0])
     
 '''
 log('handle: ' + str(handle))
@@ -482,6 +518,8 @@ elif action=='clear_feeds':
     _clear(["torFeeds"])
 elif action=='clear_posts':
     _clear(["torList_%"])
+elif action=='play':
+    play_video(video)
 
 else:
     index()

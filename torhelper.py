@@ -91,6 +91,8 @@ class TorList:
         self.posts = []
         self.time = 0
     
+    def count(self):
+        return len(self.posts)
     
     def add_post(self, post):
         self.posts.append(post)
@@ -157,7 +159,8 @@ class TorPost:
                 "mediaUrl" : self.item.mediaUrl,
                 "source" : self.item.source,
                 "source_id" : self.item.source_id,
-                "published": self.item.published
+                "published": self.item.published,
+                #"video":        self.item.video
             }
         }
         return output
@@ -171,5 +174,6 @@ class TorPost:
         self.item.source = object["item"]["source"]
         self.item.source_id = object["item"]["source_id"]
         self.item.published = object["item"]["published"]
+        #self.item.video = object["item"]["video"]
         
         
